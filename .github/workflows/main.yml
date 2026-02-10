@@ -1,4 +1,4 @@
-name: FB Multi Streamer (Ultra Fix)
+name: FB Multi Streamer (Wolf Version)
 on:
   workflow_dispatch:
     inputs:
@@ -11,18 +11,23 @@ on:
       live_text:
         description: 'Overlay Text'
         required: false
-        default: ' '
+        default: 'LIVE'
 
 jobs:
   stream:
     runs-on: ubuntu-latest
     steps:
-      - name: Run Stream via Docker
+      - name: Install FFmpeg and Fonts
         run: |
-          # استعمال Docker كيحيد مشاكل TLS حيت كيجيب FFmpeg بنسخة عالمية ناضية
-          docker run --rm jrottenberg/ffmpeg:6.1-ubuntu \
-          -re -i "${{ github.event.inputs.m3u8_url }}" \
-          -vf "drawtext=text='${{ github.event.inputs.live_text }}':x=(w-tw)/2:y=h-50:fontsize=36:fontcolor=white:box=1:boxcolor=black@0.6" \
+          sudo apt update
+          sudo apt install -y ffmpeg fonts-liberation
+      
+      - name: Start Streaming
+        run: |
+          # استعمال خط نظامي موجود 100% لتفادي Fontconfig error
+          ffmpeg -re -i "${{ github.event.inputs.m3u8_url }}" \
+          -vf "drawtext=text='${{ github.event.inputs.live_text }}':x=50:y=50:fontsize=40:fontcolor=white:box=1:boxcolor=black@0.5:fontfile=/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" \
           -c:v libx264 -preset superfast -b:v 2500k -maxrate 2500k -bufsize 5000k \
-          -pix_fmt yuv420p -g 50 -flags +global_header -c:a aac -b:a 128k -ar 44100 \
-          -f flv "${{ github.event.inputs.fb_rtmp }}"
+          -pix_fmt yuv420p -g 50 -flags +global_header \
+          -c:a aac -b:a 128k -ar 44100 \
+          -f flv -tls_verify 0 "${{ github.event.inputs.fb_rtmp }}"
