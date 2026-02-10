@@ -11,12 +11,17 @@ on:
       live_text:
         description: 'Text to show on video'
         required: false
-        default: 'My Stream'
+        default: 'Live Stream'
 
 jobs:
   stream:
     runs-on: ubuntu-latest
     steps:
+      - name: Install FFmpeg
+        run: |
+          sudo apt update
+          sudo apt install -y ffmpeg
+
       - name: Start Streaming
         run: |
           ffmpeg -re -i "${{ github.event.inputs.m3u8_url }}" \
