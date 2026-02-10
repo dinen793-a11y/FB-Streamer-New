@@ -1,4 +1,4 @@
-name: FB Multi Streamer (Wolf Version)
+name: FB Multi Streamer
 on:
   workflow_dispatch:
     inputs:
@@ -11,23 +11,23 @@ on:
       live_text:
         description: 'Overlay Text'
         required: false
-        default: 'LIVE'
+        default: ' '
 
 jobs:
   stream:
     runs-on: ubuntu-latest
     steps:
-      - name: Install FFmpeg and Fonts
+      - name: Install FFmpeg
         run: |
           sudo apt update
-          sudo apt install -y ffmpeg fonts-liberation
-      
+          sudo apt install -y ffmpeg
+
       - name: Start Streaming
         run: |
-          # استعمال خط نظامي موجود 100% لتفادي Fontconfig error
+          # إضافة flags +global_header لتحسين التوافق مع فيسبوك
+          # إضافة -tls_verify 0 لتجنب أخطاء TLS Fatal Alert
           ffmpeg -re -i "${{ github.event.inputs.m3u8_url }}" \
-          -vf "drawtext=text='${{ github.event.inputs.live_text }}':x=50:y=50:fontsize=40:fontcolor=white:box=1:boxcolor=black@0.5:fontfile=/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" \
-          -c:v libx264 -preset superfast -b:v 2500k -maxrate 2500k -bufsize 5000k \
-          -pix_fmt yuv420p -g 50 -flags +global_header \
-          -c:a aac -b:a 128k -ar 44100 \
+          -vf "drawtext=text='${{ github.event.inputs.live_text }}':x=(w-tw)/2:y=h-50:fontsize=36:fontcolor=white:box=1:boxcolor=black@0.6" \
+          -c:v libx264 -preset superfast -b:v 2000k -maxrate 2000k -bufsize 4000k \
+          -pix_fmt yuv420p -g 50 -flags +global_header -c:a aac -b:a 128k -ar 44100 \
           -f flv -tls_verify 0 "${{ github.event.inputs.fb_rtmp }}"
