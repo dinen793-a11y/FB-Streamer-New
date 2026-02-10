@@ -3,15 +3,11 @@ on:
   workflow_dispatch:
     inputs:
       m3u8_url:
-        description: 'رابط القناة'
-        required: true
+        description: 'Source URL'
       fb_rtmp:
-        description: 'رابط فيسبوك'
-        required: true
+        description: 'RTMPS'
       live_text:
-        description: 'النص'
-        required: false
-        default: ''
+        description: 'Text'
 
 jobs:
   stream:
@@ -22,7 +18,7 @@ jobs:
       
       - name: Start Streaming
         run: |
-          # كايخدم لمدة 5 ساعات و 40 دقيقة باش يخلي الوقت فين يعاود يطلق راسو
+          # زيادة إعدادات الأمان للروابط المتنوعة
           timeout 20400s ffmpeg -re -i "${{ github.event.inputs.m3u8_url }}" \
           -vf "drawtext=text='${{ github.event.inputs.live_text }}':x=(w-tw)/2:y=h-50:fontsize=36:fontcolor=white:box=1:boxcolor=black@0.6" \
           -c:v libx264 -preset superfast -b:v 2000k -maxrate 2000k -bufsize 4000k \
