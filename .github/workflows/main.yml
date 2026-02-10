@@ -18,14 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install FFmpeg
-        run: |
-          sudo apt update
-          sudo apt install -y ffmpeg
+        run: sudo apt update && sudo apt install -y ffmpeg
 
       - name: Start Streaming
         run: |
-          # استعمال الأقواس لضمان عزل النص عن رابط البث تماماً
-          ffmpeg -re -i "${{ github.event.inputs.m3u8_url }}" \
+          # نظام حماية من التوقف المفاجئ مع إضافة النص
+          timeout 20400s ffmpeg -re -i "${{ github.event.inputs.m3u8_url }}" \
           -vf "drawtext=text='${{ github.event.inputs.live_text }}':x=(w-tw)/2:y=h-50:fontsize=36:fontcolor=white:box=1:boxcolor=black@0.6" \
           -c:v libx264 -preset superfast -b:v 2000k -maxrate 2000k -bufsize 4000k \
           -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 \
