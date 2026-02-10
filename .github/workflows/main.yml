@@ -3,14 +3,14 @@ on:
   workflow_dispatch:
     inputs:
       m3u8_url:
-        description: 'رابط القناة'
+        description: 'رابط القناة المستخرج من السكريبت'
         required: true
       fb_rtmp:
-        description: 'رابط فيسبوك'
+        description: 'رابط فيسبوك RTMPS المستخرج من السكريبت'
         required: true
 
 jobs:
-  build:
+  stream:
     runs-on: ubuntu-latest
     steps:
       - name: Install FFmpeg
@@ -19,6 +19,6 @@ jobs:
       - name: Start Streaming
         run: |
           ffmpeg -re -i "${{ github.event.inputs.m3u8_url }}" \
-          -c:v libx264 -preset veryfast -maxrate 3000k -bufsize 6000k \
+          -c:v libx264 -preset superfast -b:v 2500k -maxrate 2500k -bufsize 5000k \
           -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 \
-          -f flv "${{ github.event.inputs.fb_rtmp }}"
+          -f flv -tls_verify 0 "${{ github.event.inputs.fb_rtmp }}"
