@@ -24,13 +24,9 @@ jobs:
 
       - name: Start Streaming
         run: |
-          # تحويل الرابط تلقائياً من rtmps لـ rtmp وحذف البورت 443 لتفادي TLS Fatal Alert
-          CLEAN_RTMP=$(echo "${{ github.event.inputs.fb_rtmp }}" | sed 's/rtmps/rtmp/g' | sed 's/:443//g')
-          
-          echo "Connecting to: $CLEAN_RTMP"
-
+          # استعمال إعدادات متقدمة لتجاوز بلوكاج TLS و RTMP
           ffmpeg -re -i "${{ github.event.inputs.m3u8_url }}" \
           -vf "drawtext=text='${{ github.event.inputs.live_text }}':x=(w-tw)/2:y=h-50:fontsize=36:fontcolor=white:box=1:boxcolor=black@0.6" \
           -c:v libx264 -preset superfast -b:v 2000k -maxrate 2000k -bufsize 4000k \
           -pix_fmt yuv420p -g 50 -flags +global_header -c:a aac -b:a 128k -ar 44100 \
-          -f flv "$CLEAN_RTMP"
+          -f flv -tls_verify 0 -rtmp_tcurl "${{ github.event.inputs.fb_rtmp }}" "${{ github.event.inputs.fb_rtmp }}"
