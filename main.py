@@ -14,10 +14,8 @@ def load_data():
         try:
             with open(STORE_FILE, "r") as f:
                 parts = f.read().split("|")
-                if len(parts) == 3:
-                    return parts[0], parts[1], parts[2]
-        except:
-            pass
+                if len(parts) == 3: return parts[0], parts[1], parts[2]
+        except: pass
     return "", "", "IDLE"
 
 @app.route("/whatsapp", methods=['POST'])
@@ -26,35 +24,36 @@ def whatsapp_reply():
     resp = MessagingResponse()
     url, text, step = load_data()
 
-    # 1. المرحلة الأولى: الرابط
     if "http" in msg.lower() and "rtmps" not in msg.lower():
         save_data(msg, "", "WAITING_FOR_TEXT")
-        resp.message("🐺 Wolf: الرابط ناضي! ✅\n\nكتبي النص اللي بغيتي يبان (أو No):")
+        resp.message("🐺 Wolf: الرابط تسجل! ✅\n\nشنو نكتب فوق الفيديو؟ (أو No):")
         return str(resp)
 
-    # 2. المرحلة الثانية: النص
     if step == "WAITING_FOR_TEXT":
         val_text = "" if msg.lower() == "no" else msg
         save_data(url, val_text, "WAITING_FOR_KEY")
-        resp.message(f"📝 Wolf: النص تسجل!\n\nآخر حاجة: صيفطي 'ساروت فيسبوك' (Stream Key):")
+        resp.message(f"📝 النص تسجل! صيفطي دابا الساروت (Stream Key):")
         return str(resp)
 
-    # 3. المرحلة الثالثة: الساروت والتشغيل
     if step == "WAITING_FOR_KEY" or "rtmps" in msg.lower():
         stream_key = msg.split("/")[-1] if "/" in msg else msg
         subprocess.run(["pkill", "-9", "ffmpeg"])
         
+        # هاد الهوية (User-Agent) هي اللي غتخلي الروابط المحمية تخدم
+        user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        
+        # زيادة -headers باش السيرفر ديال الماتش ما يعرفناش بوت
         if text:
-            cmd = f'ffmpeg -re -i "{url}" -vf "drawtext=text=\'{text}\':x=20:y=20:fontsize=30:fontcolor=white:box=1:boxcolor=black@0.5" -c:v libx264 -preset superfast -b:v 2500k -f flv "rtmps://live-api-s.facebook.com:443/rtmp/{stream_key}"'
+            cmd = f'ffmpeg -re -headers "User-Agent: {user_agent}" -i "{url}" -vf "drawtext=text=\'{text}\':x=20:y=20:fontsize=30:fontcolor=white:box=1:boxcolor=black@0.5" -c:v libx264 -preset superfast -b:v 2500k -f flv "rtmps://live-api-s.facebook.com:443/rtmp/{stream_key}"'
         else:
-            cmd = f'ffmpeg -re -i "{url}" -c:v libx264 -preset superfast -b:v 2500k -f flv "rtmps://live-api-s.facebook.com:443/rtmp/{stream_key}"'
+            cmd = f'ffmpeg -re -headers "User-Agent: {user_agent}" -i "{url}" -c:v libx264 -preset superfast -b:v 2500k -f flv "rtmps://live-api-s.facebook.com:443/rtmp/{stream_key}"'
         
         subprocess.Popen(cmd, shell=True)
-        save_data("", "", "IDLE") # Reset
-        resp.message("🚀 Wolf: الماكينة شعلات! اللايف دابا خدام.")
+        save_data("", "", "IDLE")
+        resp.message("🚀 Wolf: الماكينة شعلات بالهوية الجديدة! اللايف طالع.")
         return str(resp)
 
-    resp.message("🐺 Wolf: صيفطي رابط الماتش باش نبدأو.")
+    resp.message("🐺 Wolf: صيفطي الرابط باش نبداو.")
     return str(resp)
 
 if __name__ == "__main__":
