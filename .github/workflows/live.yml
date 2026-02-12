@@ -1,0 +1,22 @@
+name: Wolf Live Stream
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: 'رابط الفيديو (Direct Link)'
+        required: true
+      rtmp_key:
+        description: 'ساروت RTMP'
+        required: true
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Start Streaming
+        run: |
+          ffmpeg -re -i "${{ github.event.inputs.video_url }}" -c:v copy -c:a aac -f flv "${{ github.event.inputs.rtmp_key }}"
