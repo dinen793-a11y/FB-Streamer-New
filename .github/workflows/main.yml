@@ -1,0 +1,28 @@
+name: FB-Streamer
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: 'Link'
+        required: true
+      rtmp_key:
+        description: 'RTMP'
+        required: true
+      text:
+        description: 'Text'
+        default: 'LIVE'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Start Stream
+        run: |
+          ffmpeg -re -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
+          -i "${{ github.event.inputs.video_url }}" \
+          -vf "drawtext=text='${{ github.event.inputs.text }}':x=(w-text_w)/2:y=h-th-40:fontsize=45:fontcolor=white:borderw=3:bordercolor=black" \
+          -c:v libx264 -preset ultrafast -b:v 2500k -c:a aac -f flv "${{ github.event.inputs.rtmp_key }}"
