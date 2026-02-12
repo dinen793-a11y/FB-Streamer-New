@@ -1,13 +1,17 @@
-name: Wolf Live Stream
+name: Wolf Live Stream Visible Text
 
 on:
   workflow_dispatch:
     inputs:
       video_url:
-        description: 'رابط الفيديو (Direct Link)'
+        description: 'رابط الفيديو'
         required: true
       rtmp_key:
         description: 'ساروت RTMP'
+        required: true
+      overlay_text:
+        description: 'الكتيبة اللي غتبان'
+        default: 'WOLF LIVE ⚽'
         required: true
 
 jobs:
@@ -19,4 +23,6 @@ jobs:
 
       - name: Start Streaming
         run: |
-          ffmpeg -re -i "${{ github.event.inputs.video_url }}" -c:v copy -c:a aac -f flv "${{ github.event.inputs.rtmp_key }}"
+          ffmpeg -re -i "${{ github.event.inputs.video_url }}" \
+          -vf "drawtext=text='${{ github.event.inputs.overlay_text }}':x=(w-text_w)/2:y=h-th-40:fontsize=45:fontcolor=white:borderw=3:bordercolor=black" \
+          -c:v libx264 -preset superfast -b:v 3000k -c:a aac -f flv "${{ github.event.inputs.rtmp_key }}"
