@@ -1,4 +1,4 @@
-name: Wolf Live Stream Visible Text
+*name: Wolf Anti-Stop Stream
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
         description: 'ساروت RTMP'
         required: true
       overlay_text:
-        description: 'الكتيبة اللي غتبان'
+        description: 'الكتيبة'
         default: 'WOLF LIVE ⚽'
         required: true
 
@@ -23,6 +23,7 @@ jobs:
 
       - name: Start Streaming
         run: |
-          ffmpeg -re -i "${{ github.event.inputs.video_url }}" \
+          ffmpeg -re -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
+          -i "${{ github.event.inputs.video_url }}" \
           -vf "drawtext=text='${{ github.event.inputs.overlay_text }}':x=(w-text_w)/2:y=h-th-40:fontsize=45:fontcolor=white:borderw=3:bordercolor=black" \
-          -c:v libx264 -preset superfast -b:v 3000k -c:a aac -f flv "${{ github.event.inputs.rtmp_key }}"
+          -c:v libx264 -preset ultrafast -tune zerolatency -b:v 2000k -c:a aac -f flv "${{ github.event.inputs.rtmp_key }}"
