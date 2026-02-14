@@ -24,5 +24,7 @@ jobs:
         run: |
           ffmpeg -re -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
           -i "${{ github.event.inputs.video_url }}" \
-          -vf "drawtext=text='${{ github.event.inputs.text }}':x=(w-text_w)/2:y=h-th-40:fontsize=45:fontcolor=white:borderw=3:bordercolor=black" \
-          -c:v libx264 -preset ultrafast -b:v 2500k -c:a aac -f flv "${{ github.event.inputs.rtmp_key }}"
+          -vf "drawtext=text='${{ github.event.inputs.text }}':x=(w-text_w)/2:y=h-th-40:fontsize=45:fontcolor=white:borderw=3:bordercolor=black,fps=30,scale=1280:-1" \
+          -c:v libx264 -preset ultrafast -tune zerolatency -b:v 2500k -maxrate 2500k -bufsize 5000k \
+          -g 60 -keyint_min 60 -x264-params "nal-hrd=cbr" \
+          -c:a aac -b:a 128k -ar 44100 -f flv "${{ github.event.inputs.rtmp_key }}"
