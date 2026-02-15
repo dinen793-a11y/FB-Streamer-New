@@ -1,0 +1,32 @@
+name: FB-Streamer-Pro-v2
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: 'رابط الفيديو (HLS/Direct)'
+        required: true
+      rtmp_key:
+        description: 'RTMP Key (من فيسبوك)'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3  # ضروري باش يقرا ملف text.txt
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Start Stream
+        run: |
+          ffmpeg -re -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
+          -i "${{ github.event.inputs.video_url }}" \
+          -vf "scale=1280:720,drawtext=text='MARWA':x=W-tw-40:y=40:fontsize=35:fontcolor=white:borderw=2:bordercolor=red,drawtext=textfile='text.txt':reload=1:x=(w-text_w)/2:y=h-th-60:fontsize=40:fontcolor=yellow:borderw=2:bordercolor=black" \
+          -c:v libx264 -preset ultrafast -tune zerolatency -b:v 2500k -maxrate 2500k -bufsize 5000k \
+          -g 50 -keyint_min 50 -x264-params "nal-hrd=cbr" \
+          -c:a aac -b:a 128k -ar 44100 -f flv "${{ github.event.inputs.rtmp_key }}"
