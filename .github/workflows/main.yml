@@ -1,9 +1,18 @@
-name: FB-Streamer-Nejma-VIP
+name: FB-Streamer-Main
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 */6 * * *'
+    inputs:
+      video_url:
+        description: 'رابط الفيديو'
+        required: true
+      rtmp_key:
+        description: 'ساروت الفيسبوك RTMP'
+        required: true
+      live_text:
+        description: 'النص العربي'
+        required: false
+        default: ' '
 
 jobs:
   build:
@@ -15,17 +24,12 @@ jobs:
       - name: Install FFmpeg and Arabic Fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-ui-core
+          sudo apt-get install -y ffmpeg fonts-noto-core
 
       - name: Start Stream
-        env:
-          VIDEO_URL: ${{ secrets.VIDEO_URL }}
-          RTMP_KEY: ${{ secrets.RTMP_KEY }}
-          LIVE_TEXT: "مرحباً بكم في البث المباشر" # النص اللي غيبان
         run: |
-          # السطر التالي يعالج النص العربي ليظهر مشبكاً ومن اليمين لليسار
           ffmpeg -re -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 10 \
-          -i "$VIDEO_URL" \
-          -vf "scale=1280:720,drawtext=fontfile=/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf:text='$LIVE_TEXT':x=(w-text_w)/2:y=h-th-60:fontsize=45:fontcolor=yellow:borderw=3:bordercolor=black" \
+          -i "${{ github.event.inputs.video_url }}" \
+          -vf "scale=1280:720,drawtext=fontfile=/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf:text='${{ github.event.inputs.live_text }}':x=(w-text_w)/2:y=h-th-60:fontsize=45:fontcolor=yellow:borderw=3:bordercolor=black" \
           -c:v libx264 -preset ultrafast -tune zerolatency -b:v 2000k -maxrate 2000k -bufsize 4000k \
-          -g 50 -c:a aac -b:a 128k -f flv "$RTMP_KEY"
+          -g 50 -c:a aac -b:a 128k -f flv "${{ github.event.inputs.rtmp_key }}"
