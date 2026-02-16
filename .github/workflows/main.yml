@@ -3,7 +3,7 @@ name: FB-Streamer-Nejma-VIP
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *' # كيعاود راسو كل 6 سوايع
+    - cron: '0 */6 * * *'
 
 jobs:
   build:
@@ -12,24 +12,20 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install FFmpeg
+      - name: Install FFmpeg and Arabic Fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-ui-core
 
       - name: Start Stream
         env:
-          # حط الروابط ديالك هنا باش يخدم الـ Cron بوحدو
-          VIDEO_URL: "رابط_الفيديو_هنا"
-          RTMP_KEY: "رابط_فيسبوك_هنا"
+          VIDEO_URL: ${{ secrets.VIDEO_URL }}
+          RTMP_KEY: ${{ secrets.RTMP_KEY }}
+          LIVE_TEXT: "مرحباً بكم في البث المباشر" # النص اللي غيبان
         run: |
+          # السطر التالي يعالج النص العربي ليظهر مشبكاً ومن اليمين لليسار
           ffmpeg -re -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 10 \
           -i "$VIDEO_URL" \
-          -i nejma_vip.png \
-          -filter_complex \
-          "[1:v]scale=150:-1[logo]; \
-           [0:v]scale=1280:720[bg]; \
-           [bg][logo]overlay=W-w-30:30[vid]; \
-           [vid]drawtext=textfile='text.txt':reload=1:x=(w-text_w)/2:y=h-th-60:fontsize=40:fontcolor=yellow:borderw=2:bordercolor=black" \
+          -vf "scale=1280:720,drawtext=fontfile=/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf:text='$LIVE_TEXT':x=(w-text_w)/2:y=h-th-60:fontsize=45:fontcolor=yellow:borderw=3:bordercolor=black" \
           -c:v libx264 -preset ultrafast -tune zerolatency -b:v 2000k -maxrate 2000k -bufsize 4000k \
           -g 50 -c:a aac -b:a 128k -f flv "$RTMP_KEY"
