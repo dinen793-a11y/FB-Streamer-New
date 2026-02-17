@@ -4,10 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       video_url:
+        description: 'رابط الفيديو مباشر (MP4)'
         required: true
       rtmp_key:
+        description: 'ساروت الفيسبوك RTMP'
         required: true
       live_text:
+        description: 'النص العربي اللي غيبان'
         required: false
         default: ' '
 
@@ -15,22 +18,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install
+      - name: Install FFmpeg and Arabic Fonts
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-noto-core
 
-      - name: Start Stream (IPTV Mode)
+      - name: Start Stream
         run: |
-          # هاد السطر هو اللي غيحل مشكل الـ TLS
+          # هاد السطر كيصلح مشكل TLS فالسيرفرات القديمة
           export OPENSSL_CONF=/dev/null
-          
+
           ffmpeg -re -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
-          -protocol_whitelist file,http,https,tcp,tls,crypto \
-          -user_agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+          -tls_verify 0 -user_agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
           -i "${{ github.event.inputs.video_url }}" \
           -vf "scale=1280:720,drawtext=fontfile=/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf:text='${{ github.event.inputs.live_text }}':x=(w-text_w)/2:y=h-th-60:fontsize=45:fontcolor=yellow:borderw=3:bordercolor=black" \
           -c:v libx264 -preset ultrafast -tune zerolatency -b:v 2000k -maxrate 2000k -bufsize 4000k \
